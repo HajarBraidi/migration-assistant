@@ -14,12 +14,13 @@ _client = genai.Client(
 )
 
 
-def generate_text(prompt: str) -> str:
-    """Envoie un prompt au LLM et renvoie sa réponse en texte."""
+def _call(prompt: str, config: types.GenerateContentConfig | None = None) -> str:
+    """Appelle le LLM et renvoie le texte de sa réponse."""
     try:
         response = _client.models.generate_content(
             model=settings.gemini_model,
             contents=prompt,
+            config=config,
         )
     except Exception as exc:
         raise LLMError(f"Erreur lors de l'appel au LLM : {exc}") from exc
@@ -27,3 +28,17 @@ def generate_text(prompt: str) -> str:
     if not response.text:
         raise LLMError("Le LLM a renvoyé une réponse vide.")
     return response.text
+
+
+def generate_text(prompt: str) -> str:
+    """Réponse en texte libre."""
+    return _call(prompt)
+
+
+def generate_json(prompt: str) -> str:
+    """Réponse obligatoirement au format JSON."""
+    config = types.GenerateContentConfig(
+        response_mime_type="application/json",
+        temperature=0.3,
+    )
+    return _call(prompt, config)
