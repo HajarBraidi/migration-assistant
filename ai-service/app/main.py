@@ -1,21 +1,14 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
 
-from app.llm import LLMError, generate_text
+from app.llm import LLMError
+from app.planner import generate_plan
+from app.schemas import ApplicationDescription, MigrationPlan
 
 app = FastAPI(
     title="ai-service",
     description="Génère le plan de migration à l'aide d'un LLM.",
-    version="0.1.0",
+    version="0.2.0",
 )
-
-
-class LLMTestRequest(BaseModel):
-    question: str = Field(min_length=1, max_length=2000)
-
-
-class LLMTestResponse(BaseModel):
-    answer: str
 
 
 @app.get("/health")
@@ -24,11 +17,10 @@ def health() -> dict:
     return {"status": "ok", "service": "ai-service"}
 
 
-@app.post("/llm-test", response_model=LLMTestResponse)
-def llm_test(request: LLMTestRequest) -> LLMTestResponse:
-    """Route temporaire : vérifie la connexion au LLM."""
+@app.post("/generate-plan", response_model=MigrationPlan)
+def generate_plan_route(description: ApplicationDescription) -> MigrationPlan:
+    """Génère un plan de migration à partir de la description de l'application."""
     try:
-        answer = generate_text(request.question)
+        return generate_plan(description)
     except LLMError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
-    return LLMTestResponse(answer=answer)
