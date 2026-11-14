@@ -16,7 +16,12 @@ REGLES = """Règles à respecter :
    La durée totale de l'estimation doit correspondre à la somme des phases.
 5. Propose au moins 4 risques avec un niveau et une solution.
 6. N'invente pas d'informations : si une donnée manque, indique ton hypothèse
-   dans le résumé de l'existant."""
+   dans le résumé de l'existant.
+7. Remplis schema_avant (architecture actuelle) et schema_apres (architecture cible) :
+   - 3 à 8 composants chacun, avec des libellés courts (ex. « Application PHP 5.6 ») ;
+   - des identifiants en minuscules, sans espace ni accent (ex. app_php, base_mysql) ;
+   - chaque lien relie deux identifiants existants du même schéma ;
+   - le schéma cible doit correspondre à l'architecture cible proposée."""
 
 
 def build_plan_prompt(description: ApplicationDescription) -> str:

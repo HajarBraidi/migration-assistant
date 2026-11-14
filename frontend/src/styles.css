@@ -333,7 +333,7 @@ tr.clickable:hover { background: #fafbff; }
 .auth-pitch ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 14px; }
 .auth-pitch li { display: flex; gap: 10px; align-items: flex-start; }
 .auth-pitch li svg { color: #818cf8; flex-shrink: 0; margin-top: 2px; }
-
+.auth-footnote { font-size: 12px; color: #64748b; margin: 0; }
 
 .auth-main { flex: 1; display: grid; place-items: center; padding: 40px 24px; }
 .auth-form { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 16px; }
@@ -354,7 +354,23 @@ tr.clickable:hover { background: #fafbff; }
   .auth-panel { width: 100%; max-width: none; padding: 24px; }
   .auth-pitch { margin: 24px 0 0; }
   .auth-pitch h1 { font-size: 22px; margin-bottom: 16px; }
+  .auth-footnote { display: none; }
   .sidebar-bottom { margin-top: 0; }
   .user { background: none; padding: 0; }
   .user-info, .avatar { display: none; }
 }
+
+/* ---------- Schémas d'architecture avant / après ---------- */
+.diagrams { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 20px; }
+.diagram {
+  margin: 0; padding: 16px; border: 1px solid var(--border); border-radius: 10px;
+  background: #fafbfd; min-width: 0;
+}
+.diagram figcaption {
+  font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--muted); margin-bottom: 12px;
+}
+.diagram:last-child figcaption { color: var(--primary); }
+.diagram-canvas { display: flex; justify-content: center; overflow-x: auto; min-height: 120px; }
+.diagram-canvas svg { max-width: 100%; height: auto; }
+@media print { .diagram { break-inside: avoid; } }
