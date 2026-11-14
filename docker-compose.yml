@@ -63,5 +63,17 @@ services:
       timeout: 5s
       retries: 10
 
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - API_URL=http://api-gateway:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - api-gateway
+
 volumes:
   project-db-data:
