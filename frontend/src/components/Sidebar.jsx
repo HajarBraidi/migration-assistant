@@ -1,4 +1,4 @@
-import { FilePlus2, History } from "lucide-react";
+import { FilePlus2, History, LogOut } from "lucide-react";
 import Logo from "./Logo.jsx";
 
 const LIENS = [
@@ -6,7 +6,10 @@ const LIENS = [
   { id: "history", libelle: "Historique", icone: History },
 ];
 
-export default function Sidebar({ vue, onNaviguer }) {
+const initiales = (nom) =>
+  nom.split(" ").filter(Boolean).slice(0, 2).map((m) => m[0].toUpperCase()).join("");
+
+export default function Sidebar({ vue, onNaviguer, utilisateur, onDeconnecter }) {
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -31,8 +34,20 @@ export default function Sidebar({ vue, onNaviguer }) {
         ))}
       </nav>
 
-      <div className="sidebar-footer">
-        Plans générés par IA générative. À valider par un architecte avant mise en œuvre.
+      <div className="sidebar-bottom">
+        <div className="user">
+          <span className="avatar">{initiales(utilisateur.nom)}</span>
+          <div className="user-info">
+            <div className="user-name">{utilisateur.nom}</div>
+            <div className="user-email">{utilisateur.email}</div>
+          </div>
+          <button className="icon-btn" onClick={onDeconnecter} aria-label="Se déconnecter" title="Se déconnecter">
+            <LogOut size={18} />
+          </button>
+        </div>
+        <div className="sidebar-footer">
+          Plans générés par IA générative. À valider par un architecte avant mise en œuvre.
+        </div>
       </div>
     </aside>
   );

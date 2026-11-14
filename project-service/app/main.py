@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -23,7 +23,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="project-service",
     description="Gère les projets de migration : validation, règles de cohérence, historique.",
-    version="0.2.0",
+    version="0.3.0",
     lifespan=lifespan,
 )
 
@@ -49,6 +49,11 @@ class ProjectSummary(BaseModel):
     cree_le: datetime
 
 
+def utilisateur_courant(x_user_id: int = Header()) -> int:
+    """Identifiant de l'utilisateur connecté, transmis par l'api-gateway (en-tête X-User-Id)."""
+    return x_user_id
+
+
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok", "service": "project-service"}
@@ -56,7 +61,9 @@ def health() -> dict:
 
 @app.post("/projects", response_model=ProjectResponse, status_code=201)
 def creer_projet(
-    description: ApplicationDescription, db: Session = Depends(get_db)
+    description: ApplicationDescription,
+    user_id: int = Depends(utilisateur_courant),
+    db: Session = Depends(get_db),
 ) -> Project:
     """Génère le plan, vérifie sa cohérence et enregistre le projet."""
     try:
@@ -65,6 +72,7 @@ def creer_projet(
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
     projet = Project(
+        user_id=user_id,
         nom=description.nom,
         description=description.model_dump(mode="json"),
         plan=plan.model_dump(mode="json"),
@@ -77,9 +85,13 @@ def creer_projet(
 
 
 @app.get("/projects", response_model=list[ProjectSummary])
-def lister_projets(db: Session = Depends(get_db)) -> list[ProjectSummary]:
-    """Historique des projets, du plus récent au plus ancien."""
-    projets = db.scalars(select(Project).order_by(Project.cree_le.desc())).all()
+def lister_projets(
+    user_id: int = Depends(utilisateur_courant), db: Session = Depends(get_db)
+) -> list[ProjectSummary]:
+    """Historique des projets de l'utilisateur, du plus récent au plus ancien."""
+    projets = db.scalars(
+        select(Project).where(Project.user_id == user_id).order_by(Project.cree_le.desc())
+    ).all()
     return [
         ProjectSummary(
             id=p.id,
@@ -92,9 +104,13 @@ def lister_projets(db: Session = Depends(get_db)) -> list[ProjectSummary]:
 
 
 @app.get("/projects/{project_id}", response_model=ProjectResponse)
-def obtenir_projet(project_id: int, db: Session = Depends(get_db)) -> Project:
-    """Un projet précis avec son plan complet."""
+def obtenir_projet(
+    project_id: int,
+    user_id: int = Depends(utilisateur_courant),
+    db: Session = Depends(get_db),
+) -> Project:
+    """Un projet précis, uniquement s'il appartient à l'utilisateur."""
     projet = db.get(Project, project_id)
-    if projet is None:
+    if projet is None or projet.user_id != user_id:
         raise HTTPException(status_code=404, detail="Projet introuvable.")
     return projet

@@ -1,10 +1,48 @@
 // Toutes les requêtes passent par l'api-gateway (préfixe /api)
 
+const CLE_SESSION = "migraplan.session";
+
 const LIBELLES_CHAMPS = {
-  nom: "Nom de l'application",
+  nom: "Nom",
+  email: "Email",
+  mot_de_passe: "Mot de passe",
   objectifs: "Objectifs de la migration",
   taille_equipe: "Taille de l'équipe",
 };
+
+// ---------- Session (jeton + utilisateur), conservée dans le navigateur ----------
+
+export function lireSession() {
+  try {
+    return JSON.parse(localStorage.getItem(CLE_SESSION));
+  } catch {
+    return null;
+  }
+}
+
+function enregistrerSession(session) {
+  try {
+    localStorage.setItem(CLE_SESSION, JSON.stringify(session));
+  } catch {
+    /* stockage indisponible : la session durera le temps de l'onglet */
+  }
+}
+
+export function effacerSession() {
+  try {
+    localStorage.removeItem(CLE_SESSION);
+  } catch {
+    /* rien à faire */
+  }
+}
+
+// Appelée quand le serveur répond 401 (jeton absent, invalide ou expiré)
+let surSessionExpiree = () => {};
+export function quandSessionExpiree(fonction) {
+  surSessionExpiree = fonction;
+}
+
+// ---------- Requêtes ----------
 
 function messageErreur(status, data) {
   if (status === 422 && Array.isArray(data?.detail)) {
@@ -15,28 +53,46 @@ function messageErreur(status, data) {
     return `Certaines informations sont invalides : ${[...new Set(champs)].join(", ")}.`;
   }
   if (status === 502 || status === 503) {
-    return "Le service de génération est momentanément indisponible. Réessayez dans quelques instants.";
+    return "Le service est momentanément indisponible. Réessayez dans quelques instants.";
   }
   if (status === 404) return "Ce projet est introuvable.";
   return data?.detail || "Une erreur inattendue est survenue.";
 }
 
 async function requete(chemin, options = {}) {
+  const session = lireSession();
   let reponse;
   try {
     reponse = await fetch(`/api${chemin}`, {
-      headers: { "Content-Type": "application/json" },
       ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(session ? { Authorization: `Bearer ${session.jeton}` } : {}),
+      },
     });
   } catch {
     throw new Error("Impossible de joindre le serveur. Vérifiez que l'application est démarrée.");
   }
   const data = await reponse.json().catch(() => null);
+  if (reponse.status === 401 && session && !chemin.startsWith("/auth/login")) {
+    effacerSession();
+    surSessionExpiree();
+  }
   if (!reponse.ok) throw new Error(messageErreur(reponse.status, data));
   return data;
 }
 
+async function authentifier(chemin, donnees) {
+  const data = await requete(chemin, { method: "POST", body: JSON.stringify(donnees) });
+  const session = { jeton: data.access_token, utilisateur: data.utilisateur };
+  enregistrerSession(session);
+  return session;
+}
+
 export const api = {
+  inscrire: (donnees) => authentifier("/auth/register", donnees),
+  connecter: (donnees) => authentifier("/auth/login", donnees),
+  moi: () => requete("/auth/me"),
   creerProjet: (description) =>
     requete("/projects", { method: "POST", body: JSON.stringify(description) }),
   listerProjets: () => requete("/projects"),

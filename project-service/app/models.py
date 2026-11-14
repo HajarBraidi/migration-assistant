@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import JSON, DateTime, String, func
+from sqlalchemy import JSON, DateTime, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -12,6 +12,8 @@ class Project(Base):
     __tablename__ = "projects"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    # Propriétaire du projet (identifiant fourni par auth-service via le gateway)
+    user_id: Mapped[int] = mapped_column(Integer, index=True)
     nom: Mapped[str] = mapped_column(String(100))
     description: Mapped[dict] = mapped_column(JSON)
     plan: Mapped[dict] = mapped_column(JSON)
