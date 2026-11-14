@@ -14,3 +14,41 @@ services:
       - ./ai-service/tests:/app/tests
     environment:
       - WATCHFILES_FORCE_POLLING=true
+
+  project-service:
+    build:
+      context: ./project-service
+      args:
+        INSTALL_DEV: "true"
+    ports:
+      - "8002:8000"
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./project-service/app:/app/app
+      - ./project-service/tests:/app/tests
+    environment:
+      - AI_SERVICE_URL=http://ai-service:8000
+      - DATABASE_URL=postgresql+psycopg://migration:migration@project-db:5432/projects
+      - WATCHFILES_FORCE_POLLING=true
+    depends_on:
+      ai-service:
+        condition: service_started
+      project-db:
+        condition: service_healthy
+
+  project-db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=migration
+      - POSTGRES_PASSWORD=migration
+      - POSTGRES_DB=projects
+    volumes:
+      - project-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U migration -d projects"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  project-db-data:
