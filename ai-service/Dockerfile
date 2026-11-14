@@ -7,15 +7,17 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# 1) Installer les dépendances (mis en cache si requirements.txt ne change pas)
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Dépendances de production, + outils de test si INSTALL_DEV=true
+ARG INSTALL_DEV=false
+COPY requirements.txt requirements-dev.txt ./
+RUN pip install --no-cache-dir -r requirements.txt \
+    && if [ "$INSTALL_DEV" = "true" ]; then pip install --no-cache-dir -r requirements-dev.txt; fi
 
-# 2) Copier le code
+# Copier le code
 COPY app ./app
 
 # Sécurité : ne pas exécuter le service en tant qu'administrateur (root)
-RUN useradd --create-home appuser
+RUN useradd --create-home appuser && chown appuser:appuser /app
 USER appuser
 
 EXPOSE 8000
