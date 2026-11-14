@@ -8,12 +8,12 @@ class AIServiceError(Exception):
     """Erreur lors de l'appel à ai-service."""
 
 
-def demander_plan(description: ApplicationDescription) -> MigrationPlan:
-    """Demande à ai-service de générer le plan de migration."""
+def _appeler(route: str, donnees: dict) -> MigrationPlan:
+    """Appelle une route d'ai-service et renvoie le plan obtenu."""
     try:
         response = httpx.post(
-            f"{settings.ai_service_url}/generate-plan",
-            json=description.model_dump(mode="json"),
+            f"{settings.ai_service_url}{route}",
+            json=donnees,
             timeout=settings.ai_service_timeout_seconds,
         )
     except httpx.HTTPError as exc:
@@ -27,3 +27,22 @@ def demander_plan(description: ApplicationDescription) -> MigrationPlan:
         raise AIServiceError(f"ai-service a renvoyé l'erreur {response.status_code} : {detail}")
 
     return MigrationPlan.model_validate(response.json())
+
+
+def demander_plan(description: ApplicationDescription) -> MigrationPlan:
+    """Demande à ai-service de générer le plan de migration."""
+    return _appeler("/generate-plan", description.model_dump(mode="json"))
+
+
+def demander_revision(
+    description: ApplicationDescription, plan: MigrationPlan, demande: str
+) -> MigrationPlan:
+    """Demande à ai-service une nouvelle version du plan."""
+    return _appeler(
+        "/revise-plan",
+        {
+            "description": description.model_dump(mode="json"),
+            "plan": plan.model_dump(mode="json"),
+            "demande": demande,
+        },
+    )

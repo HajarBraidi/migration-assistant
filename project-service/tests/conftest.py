@@ -51,6 +51,13 @@ def client(monkeypatch):
     monkeypatch.setattr(
         "app.main.demander_plan", lambda description: MigrationPlan(**PLAN_VALIDE)
     )
+    # Faux ai-service pour les révisions : passe à la stratégie Rehost
+    monkeypatch.setattr(
+        "app.main.demander_revision",
+        lambda description, plan, demande: MigrationPlan(
+            **{**PLAN_VALIDE, "strategie": {"strategie": "Rehost", "justification": demande}}
+        ),
+    )
     yield TestClient(app)
     app.dependency_overrides.clear()
 

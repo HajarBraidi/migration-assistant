@@ -4,6 +4,7 @@ import {
 } from "lucide-react";
 import { STRATEGIES } from "../formConfig.js";
 import ArchitectureDiagram from "./ArchitectureDiagram.jsx";
+import RevisionPanel from "./RevisionPanel.jsx";
 
 const formatDate = (iso) =>
   new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
@@ -34,8 +35,9 @@ function Indicateur({ icone: Icone, libelle, valeur }) {
   );
 }
 
-export default function PlanView({ projet, onRetour }) {
+export default function PlanView({ projet, onRetour, onMiseAJour }) {
   const { plan, avertissements } = projet;
+  const version = (projet.revisions?.length || 0) + 1;
 
   return (
     <div className="page">
@@ -50,7 +52,10 @@ export default function PlanView({ projet, onRetour }) {
         <div>
           <p className="eyebrow">Plan de migration</p>
           <h1>{projet.nom}</h1>
-          <p className="subtitle">Généré le {formatDate(projet.cree_le)}</p>
+          <p className="subtitle">
+            Généré le {formatDate(projet.cree_le)}
+            <span className="badge badge-neutral version-badge">Version {version}</span>
+          </p>
         </div>
         <div className="strategy-pill">
           <span className="strategy-label">Stratégie recommandée</span>
@@ -75,6 +80,8 @@ export default function PlanView({ projet, onRetour }) {
           </div>
         </div>
       )}
+
+      <RevisionPanel projet={projet} onMiseAJour={onMiseAJour} />
 
       <Section icone={ClipboardList} titre="1. Résumé de l'existant">
         <p>{plan.resume_existant.resume}</p>

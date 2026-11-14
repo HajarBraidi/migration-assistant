@@ -73,7 +73,7 @@ export default function App() {
           <MigrationForm valeurs={valeurs} setValeurs={setValeurs} onSoumettre={generer} erreurServeur={erreur} />
         )}
         {vue === "loading" && <Loader />}
-        {vue === "plan" && projet && <PlanView projet={projet} onRetour={() => naviguer("history")} />}
+        {vue === "plan" && projet && <PlanView projet={projet} onRetour={() => naviguer("history")} onMiseAJour={setProjet} />}
         {vue === "history" && <History onOuvrir={ouvrir} onNouveau={() => naviguer("form")} />}
       </main>
     </div>

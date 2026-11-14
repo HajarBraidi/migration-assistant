@@ -103,3 +103,15 @@ async def projet(
     return await relayer(
         request, f"{settings.project_service_url}/projects/{project_id}", {"X-User-Id": user_id}
     )
+
+
+@app.post("/api/projects/{project_id}/revisions")
+async def reviser_projet(
+    project_id: int, request: Request, user_id: str = Depends(utilisateur_connecte)
+) -> Response:
+    """Demande une modification du plan d'un projet de l'utilisateur connecté."""
+    return await relayer(
+        request,
+        f"{settings.project_service_url}/projects/{project_id}/revisions",
+        {"X-User-Id": user_id},
+    )

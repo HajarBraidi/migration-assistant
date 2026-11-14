@@ -2,13 +2,13 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 
 from fastapi import Depends, FastAPI, Header, HTTPException
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.ai_client import AIServiceError, demander_plan
+from app.ai_client import AIServiceError, demander_plan, demander_revision
 from app.database import Base, engine, get_db
-from app.models import Project
+from app.models import Project, Revision
 from app.rules import verifier_coherence
 from app.schemas import ApplicationDescription, MigrationPlan
 
@@ -28,8 +28,18 @@ app = FastAPI(
 )
 
 
+class RevisionSummary(BaseModel):
+    """Une modification demandée par l'utilisateur."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    demande: str
+    cree_le: datetime
+
+
 class ProjectResponse(BaseModel):
-    """Un projet complet avec son plan."""
+    """Un projet complet avec la dernière version de son plan."""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -38,6 +48,11 @@ class ProjectResponse(BaseModel):
     cree_le: datetime
     plan: MigrationPlan
     avertissements: list[str]
+    revisions: list[RevisionSummary] = []
+
+
+class DemandeRevision(BaseModel):
+    demande: str = Field(min_length=3, max_length=500)
 
 
 class ProjectSummary(BaseModel):
@@ -103,6 +118,14 @@ def lister_projets(
     ]
 
 
+def projet_de_l_utilisateur(project_id: int, user_id: int, db: Session) -> Project:
+    """Renvoie le projet s'il appartient à l'utilisateur, sinon une erreur 404."""
+    projet = db.get(Project, project_id)
+    if projet is None or projet.user_id != user_id:
+        raise HTTPException(status_code=404, detail="Projet introuvable.")
+    return projet
+
+
 @app.get("/projects/{project_id}", response_model=ProjectResponse)
 def obtenir_projet(
     project_id: int,
@@ -110,7 +133,30 @@ def obtenir_projet(
     db: Session = Depends(get_db),
 ) -> Project:
     """Un projet précis, uniquement s'il appartient à l'utilisateur."""
-    projet = db.get(Project, project_id)
-    if projet is None or projet.user_id != user_id:
-        raise HTTPException(status_code=404, detail="Projet introuvable.")
+    return projet_de_l_utilisateur(project_id, user_id, db)
+
+
+@app.post("/projects/{project_id}/revisions", response_model=ProjectResponse)
+def reviser_projet(
+    project_id: int,
+    corps: DemandeRevision,
+    user_id: int = Depends(utilisateur_courant),
+    db: Session = Depends(get_db),
+) -> Project:
+    """Modifie le plan selon la demande de l'utilisateur et garde la version précédente."""
+    projet = projet_de_l_utilisateur(project_id, user_id, db)
+    description = ApplicationDescription(**projet.description)
+
+    try:
+        nouveau_plan = demander_revision(
+            description, MigrationPlan(**projet.plan), corps.demande
+        )
+    except AIServiceError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    projet.revisions.append(Revision(demande=corps.demande, plan_precedent=projet.plan))
+    projet.plan = nouveau_plan.model_dump(mode="json")
+    projet.avertissements = verifier_coherence(description, nouveau_plan)
+    db.commit()
+    db.refresh(projet)
     return projet

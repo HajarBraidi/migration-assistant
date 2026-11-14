@@ -6,6 +6,7 @@ const LIBELLES_CHAMPS = {
   nom: "Nom",
   email: "Email",
   mot_de_passe: "Mot de passe",
+  demande: "Demande de modification",
   objectifs: "Objectifs de la migration",
   taille_equipe: "Taille de l'équipe",
 };
@@ -97,4 +98,6 @@ export const api = {
     requete("/projects", { method: "POST", body: JSON.stringify(description) }),
   listerProjets: () => requete("/projects"),
   obtenirProjet: (id) => requete(`/projects/${id}`),
+  reviserProjet: (id, demande) =>
+    requete(`/projects/${id}/revisions`, { method: "POST", body: JSON.stringify({ demande }) }),
 };
