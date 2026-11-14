@@ -1,5 +1,7 @@
 # migration-assistant
 
+![Tests](https://github.com/HajarBraidi/migration-assistant/actions/workflows/tests.yml/badge.svg)
+
 Assistant de migration d'applications basé sur l'IA générative (PFA – 3e année).
 
 L'utilisateur décrit son application existante (technologies, base de données,
