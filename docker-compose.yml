@@ -14,3 +14,20 @@ services:
       - ./ai-service/tests:/app/tests
     environment:
       - WATCHFILES_FORCE_POLLING=true
+
+  project-service:
+    build:
+      context: ./project-service
+      args:
+        INSTALL_DEV: "true"
+    ports:
+      - "8002:8000"
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./project-service/app:/app/app
+      - ./project-service/tests:/app/tests
+    environment:
+      - AI_SERVICE_URL=http://ai-service:8000
+      - WATCHFILES_FORCE_POLLING=true
+    depends_on:
+      - ai-service
