@@ -25,6 +25,10 @@ PLAN_VALIDE = {
     "estimation": {"duree_totale_semaines": 2, "equipe": ["1 développeur"], "cout": "Faible"},
 }
 
+# En-têtes envoyés par l'api-gateway pour deux utilisateurs différents
+UTILISATEUR_1 = {"X-User-Id": "1"}
+UTILISATEUR_2 = {"X-User-Id": "2"}
+
 
 @pytest.fixture
 def client(monkeypatch):

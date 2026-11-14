@@ -1,4 +1,16 @@
 services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - API_URL=http://api-gateway:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - api-gateway
+
   api-gateway:
     build:
       context: ./api-gateway
@@ -12,9 +24,43 @@ services:
       - ./api-gateway/tests:/app/tests
     environment:
       - PROJECT_SERVICE_URL=http://project-service:8000
+      - AUTH_SERVICE_URL=http://auth-service:8000
+      - JWT_SECRET=${JWT_SECRET}
       - WATCHFILES_FORCE_POLLING=true
     depends_on:
       - project-service
+      - auth-service
+
+  auth-service:
+    build:
+      context: ./auth-service
+      args:
+        INSTALL_DEV: "true"
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./auth-service/app:/app/app
+      - ./auth-service/tests:/app/tests
+    environment:
+      - DATABASE_URL=postgresql+psycopg://auth:auth@auth-db:5432/auth
+      - JWT_SECRET=${JWT_SECRET}
+      - WATCHFILES_FORCE_POLLING=true
+    depends_on:
+      auth-db:
+        condition: service_healthy
+
+  auth-db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=auth
+      - POSTGRES_PASSWORD=auth
+      - POSTGRES_DB=auth
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auth -d auth"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   ai-service:
     build:
@@ -63,17 +109,6 @@ services:
       timeout: 5s
       retries: 10
 
-  frontend:
-    build: ./frontend
-    ports:
-      - "5173:5173"
-    environment:
-      - API_URL=http://api-gateway:8000
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    depends_on:
-      - api-gateway
-
 volumes:
   project-db-data:
+  auth-db-data:
