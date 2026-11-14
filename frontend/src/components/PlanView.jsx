@@ -3,6 +3,7 @@ import {
   RotateCcw, Shuffle, ShieldAlert, Target, Users, Wallet,
 } from "lucide-react";
 import { STRATEGIES } from "../formConfig.js";
+import ArchitectureDiagram from "./ArchitectureDiagram.jsx";
 
 const formatDate = (iso) =>
   new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
@@ -86,6 +87,12 @@ export default function PlanView({ projet, onRetour }) {
       </Section>
 
       <Section icone={Layers} titre="3. Architecture cible">
+        {plan.schema_avant && plan.schema_apres && (
+          <div className="diagrams">
+            <ArchitectureDiagram titre="Architecture actuelle" diagramme={plan.schema_avant} />
+            <ArchitectureDiagram titre="Architecture cible" diagramme={plan.schema_apres} />
+          </div>
+        )}
         <div className="table-wrap">
           <table>
             <thead><tr><th>Composant</th><th>Choix</th><th>Justification</th></tr></thead>

@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 # ---------- ENTRÉE : description de l'application ----------
 
@@ -36,45 +36,32 @@ class ApplicationDescription(BaseModel):
 
     model_config = ConfigDict(json_schema_extra={"examples": [EXEMPLE_DESCRIPTION]})
 
-    # Général
     nom: str = Field(min_length=1, max_length=100)
     domaine: Literal["Gestion de stock", "E-commerce", "RH", "Finance", "Autre"]
     objectifs: list[
         Literal["Réduire les coûts", "Performances", "Moderniser", "Sécuriser", "Scalabilité"]
     ] = Field(min_length=1)
     problemes_actuels: list[str] = []
-
-    # Technologies
     langage: str = Field(min_length=1)
     version_langage: str | None = None
     framework_backend: str | None = None
     interface_utilisateur: str = Field(min_length=1)
-
-    # Base de données
     type_base_donnees: str = Field(min_length=1)
     volume_donnees: Literal["< 10 Go", "10 à 100 Go", "100 Go à 1 To", "> 1 To"]
-
-    # Architecture et hébergement
     type_architecture: Literal["Monolithe", "Plusieurs services", "Je ne sais pas"]
     hebergement_actuel: Literal["Serveur local", "Hébergeur", "Cloud"]
     hebergement_cible: Literal["AWS", "Azure", "GCP", "Local", "Pas de préférence"] = (
         "Pas de préférence"
     )
     integrations_externes: str | None = None
-
-    # Utilisation
     nombre_utilisateurs: Literal["< 100", "100 à 1 000", "1 000 à 50 000", "> 50 000"]
     evolution_prevue: Literal["Stable", "Croissance modérée", "Croissance forte"]
-
-    # Contraintes
     budget: Literal["Faible", "Moyen", "Élevé"]
     delai: Literal["< 3 mois", "3 à 6 mois", "6 à 12 mois", "> 12 mois"]
     interruption_acceptable: Literal["Aucune", "Quelques heures", "Quelques jours"]
     exigences_securite: list[str] = []
     taille_equipe: int = Field(ge=1, le=500)
     competences_equipe: str | None = None
-
-    # Détails
     description_libre: str | None = Field(default=None, max_length=3000)
 
 
@@ -131,6 +118,40 @@ class Estimation(BaseModel):
     cout: str
 
 
+TypeComposant = Literal[
+    "utilisateur", "frontend", "backend", "base_de_donnees", "service_externe", "infrastructure"
+]
+
+
+class Composant(BaseModel):
+    id: str = Field(pattern=r"^[a-z][a-z0-9_]*$", max_length=30)
+    libelle: str = Field(min_length=1, max_length=60)
+    type: TypeComposant
+
+
+class Lien(BaseModel):
+    source: str
+    cible: str
+    libelle: str | None = Field(default=None, max_length=40)
+
+
+class Diagramme(BaseModel):
+    """Schéma d'architecture : des composants reliés par des liens."""
+
+    composants: list[Composant] = Field(min_length=2, max_length=12)
+    liens: list[Lien]
+
+    @model_validator(mode="after")
+    def verifier_liens(self) -> "Diagramme":
+        ids = [c.id for c in self.composants]
+        if len(ids) != len(set(ids)):
+            raise ValueError("Deux composants ont le même identifiant.")
+        for lien in self.liens:
+            if lien.source not in ids or lien.cible not in ids:
+                raise ValueError(f"Lien vers un composant inconnu : {lien.source} -> {lien.cible}")
+        return self
+
+
 class MigrationPlan(BaseModel):
     """Plan de migration généré par le LLM."""
 
@@ -142,3 +163,6 @@ class MigrationPlan(BaseModel):
     risques: list[Risque]
     rollback: PlanRollback
     estimation: Estimation
+    # Facultatifs : les plans enregistrés avant l'ajout des schémas restent valides
+    schema_avant: Diagramme | None = None
+    schema_apres: Diagramme | None = None
