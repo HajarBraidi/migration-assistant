@@ -6,7 +6,7 @@ const LIBELLES_CHAMPS = {
   nom: "Nom",
   email: "Email",
   mot_de_passe: "Mot de passe",
-  demande: "Demande de modification",
+  message: "Message",
   objectifs: "Objectifs de la migration",
   taille_equipe: "Taille de l'équipe",
 };
@@ -79,7 +79,11 @@ async function requete(chemin, options = {}) {
     effacerSession();
     surSessionExpiree();
   }
-  if (!reponse.ok) throw new Error(messageErreur(reponse.status, data));
+  if (!reponse.ok) {
+    const erreur = new Error(messageErreur(reponse.status, data));
+    erreur.status = reponse.status;
+    throw erreur;
+  }
   return data;
 }
 
@@ -98,6 +102,9 @@ export const api = {
     requete("/projects", { method: "POST", body: JSON.stringify(description) }),
   listerProjets: () => requete("/projects"),
   obtenirProjet: (id) => requete(`/projects/${id}`),
-  reviserProjet: (id, demande) =>
-    requete(`/projects/${id}/revisions`, { method: "POST", body: JSON.stringify({ demande }) }),
+  envoyerMessage: (id, message) =>
+    requete(`/projects/${id}/messages`, { method: "POST", body: JSON.stringify({ message }) }),
+  obtenirVersion: (id, numero) => requete(`/projects/${id}/versions/${numero}`),
+  restaurerVersion: (id, numero) =>
+    requete(`/projects/${id}/versions/${numero}/restaurer`, { method: "POST" }),
 };

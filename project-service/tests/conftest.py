@@ -8,7 +8,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.database import Base, get_db
 from app.main import app
-from app.schemas import EXEMPLE_DESCRIPTION, MigrationPlan
+from app.schemas import EXEMPLE_DESCRIPTION, MigrationPlan, ReponseAssistant, RevisionResult
 
 PLAN_VALIDE = {
     "resume_existant": {"resume": "Monolithe PHP.", "points_faibles": ["PHP obsolète"]},
@@ -51,13 +51,15 @@ def client(monkeypatch):
     monkeypatch.setattr(
         "app.main.demander_plan", lambda description: MigrationPlan(**PLAN_VALIDE)
     )
-    # Faux ai-service pour les révisions : passe à la stratégie Rehost
-    monkeypatch.setattr(
-        "app.main.demander_revision",
-        lambda description, plan, demande: MigrationPlan(
-            **{**PLAN_VALIDE, "strategie": {"strategie": "Rehost", "justification": demande}}
-        ),
-    )
+    # Faux assistant : modifie le plan si le message parle de coût (« moins cher »),
+    # sinon pose une question (comme pour un message incompréhensible)
+    def faux_assistant(description, plan, historique, message):
+        if "moins ch" in message:
+            nouveau = {**PLAN_VALIDE, "strategie": {"strategie": "Rehost", "justification": message}}
+            return ReponseAssistant(type="modification", message="Je passe en Rehost.", plan=nouveau)
+        return ReponseAssistant(type="question", message="Pouvez-vous préciser votre demande ?")
+
+    monkeypatch.setattr("app.main.discuter", faux_assistant)
     yield TestClient(app)
     app.dependency_overrides.clear()
 

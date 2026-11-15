@@ -1,15 +1,15 @@
 import httpx
 
 from app.config import settings
-from app.schemas import ApplicationDescription, MigrationPlan
+from app.schemas import ApplicationDescription, MessageChat, MigrationPlan, ReponseAssistant
 
 
 class AIServiceError(Exception):
     """Erreur lors de l'appel à ai-service."""
 
 
-def _appeler(route: str, donnees: dict) -> MigrationPlan:
-    """Appelle une route d'ai-service et renvoie le plan obtenu."""
+def _appeler(route: str, donnees: dict) -> dict:
+    """Appelle une route d'ai-service et renvoie sa réponse JSON."""
     try:
         response = httpx.post(
             f"{settings.ai_service_url}{route}",
@@ -26,23 +26,31 @@ def _appeler(route: str, donnees: dict) -> MigrationPlan:
             detail = response.text
         raise AIServiceError(f"ai-service a renvoyé l'erreur {response.status_code} : {detail}")
 
-    return MigrationPlan.model_validate(response.json())
+    return response.json()
 
 
 def demander_plan(description: ApplicationDescription) -> MigrationPlan:
     """Demande à ai-service de générer le plan de migration."""
-    return _appeler("/generate-plan", description.model_dump(mode="json"))
+    return MigrationPlan.model_validate(
+        _appeler("/generate-plan", description.model_dump(mode="json"))
+    )
 
 
-def demander_revision(
-    description: ApplicationDescription, plan: MigrationPlan, demande: str
-) -> MigrationPlan:
-    """Demande à ai-service une nouvelle version du plan."""
-    return _appeler(
-        "/revise-plan",
-        {
-            "description": description.model_dump(mode="json"),
-            "plan": plan.model_dump(mode="json"),
-            "demande": demande,
-        },
+def discuter(
+    description: ApplicationDescription,
+    plan: MigrationPlan,
+    historique: list[MessageChat],
+    message: str,
+) -> ReponseAssistant:
+    """Envoie un message à l'assistant et renvoie sa réponse."""
+    return ReponseAssistant.model_validate(
+        _appeler(
+            "/chat",
+            {
+                "description": description.model_dump(mode="json"),
+                "plan": plan.model_dump(mode="json"),
+                "historique": [m.model_dump() for m in historique],
+                "message": message,
+            },
+        )
     )

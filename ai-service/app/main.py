@@ -2,20 +2,21 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from app.llm import LLMError
-from app.planner import generate_plan, revise_plan
-from app.schemas import ApplicationDescription, MigrationPlan
+from app.planner import discuter, generate_plan
+from app.schemas import ApplicationDescription, MessageChat, MigrationPlan, ReponseAssistant
 
 app = FastAPI(
     title="ai-service",
-    description="Génère et ajuste le plan de migration à l'aide d'un LLM.",
-    version="0.3.0",
+    description="Génère le plan de migration et dialogue avec l'utilisateur à l'aide d'un LLM.",
+    version="0.4.0",
 )
 
 
-class RevisionRequest(BaseModel):
+class ChatRequest(BaseModel):
     description: ApplicationDescription
     plan: MigrationPlan
-    demande: str = Field(min_length=3, max_length=500)
+    historique: list[MessageChat] = []
+    message: str = Field(min_length=1, max_length=1000)
 
 
 @app.get("/health")
@@ -33,10 +34,10 @@ def generate_plan_route(description: ApplicationDescription) -> MigrationPlan:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
-@app.post("/revise-plan", response_model=MigrationPlan)
-def revise_plan_route(requete: RevisionRequest) -> MigrationPlan:
-    """Produit une nouvelle version du plan selon la demande de l'utilisateur."""
+@app.post("/chat", response_model=ReponseAssistant)
+def chat_route(requete: ChatRequest) -> ReponseAssistant:
+    """Un tour de conversation avec l'assistant à propos du plan."""
     try:
-        return revise_plan(requete.description, requete.plan, requete.demande)
+        return discuter(requete.description, requete.plan, requete.historique, requete.message)
     except LLMError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
