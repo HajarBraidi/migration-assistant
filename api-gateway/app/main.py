@@ -103,3 +103,40 @@ async def projet(
     return await relayer(
         request, f"{settings.project_service_url}/projects/{project_id}", {"X-User-Id": user_id}
     )
+
+
+
+@app.post("/api/projects/{project_id}/messages")
+async def envoyer_message(
+    project_id: int, request: Request, user_id: str = Depends(utilisateur_connecte)
+) -> Response:
+    """Envoie un message à l'assistant à propos d'un projet de l'utilisateur."""
+    return await relayer(
+        request,
+        f"{settings.project_service_url}/projects/{project_id}/messages",
+        {"X-User-Id": user_id},
+    )
+
+
+@app.get("/api/projects/{project_id}/versions/{numero}")
+async def obtenir_version(
+    project_id: int, numero: int, request: Request, user_id: str = Depends(utilisateur_connecte)
+) -> Response:
+    """Consulter une version précise du plan."""
+    return await relayer(
+        request,
+        f"{settings.project_service_url}/projects/{project_id}/versions/{numero}",
+        {"X-User-Id": user_id},
+    )
+
+
+@app.post("/api/projects/{project_id}/versions/{numero}/restaurer")
+async def restaurer_version(
+    project_id: int, numero: int, request: Request, user_id: str = Depends(utilisateur_connecte)
+) -> Response:
+    """Restaurer une ancienne version (crée une nouvelle version)."""
+    return await relayer(
+        request,
+        f"{settings.project_service_url}/projects/{project_id}/versions/{numero}/restaurer",
+        {"X-User-Id": user_id},
+    )

@@ -166,3 +166,52 @@ class MigrationPlan(BaseModel):
     # Facultatifs : les plans enregistrés avant l'ajout des schémas restent valides
     schema_avant: Diagramme | None = None
     schema_apres: Diagramme | None = None
+
+
+class RevisionResult(BaseModel):
+    """Réponse du LLM à une demande de modification du plan."""
+
+    demande_valide: bool = Field(
+        description="false si la demande est incompréhensible ou sans rapport avec la migration"
+    )
+    message: str = Field(description="Explication courte destinée à l'utilisateur")
+    changements: list[str] = Field(
+        default=[], description="Liste courte des modifications apportées au plan"
+    )
+    plan: MigrationPlan | None = Field(
+        default=None, description="Nouvelle version complète du plan si la demande est valide"
+    )
+
+    @model_validator(mode="after")
+    def verifier_coherence(self) -> "RevisionResult":
+        if self.demande_valide and self.plan is None:
+            raise ValueError("Une demande valide doit être accompagnée du nouveau plan.")
+        if self.demande_valide and not self.changements:
+            raise ValueError("Une demande valide doit lister les changements apportés.")
+        return self
+
+
+# ---------- DIALOGUE avec l'assistant ----------
+
+
+class MessageChat(BaseModel):
+    """Un message de la conversation."""
+
+    role: Literal["utilisateur", "assistant"]
+    contenu: str
+
+
+class ReponseAssistant(BaseModel):
+    """Réponse de l'assistant à un message de l'utilisateur."""
+
+    type: Literal["question", "reponse", "modification"]
+    message: str = Field(min_length=1)
+    plan: MigrationPlan | None = None
+
+    @model_validator(mode="after")
+    def verifier_plan(self) -> "ReponseAssistant":
+        if self.type == "modification" and self.plan is None:
+            raise ValueError("Une modification doit contenir le nouveau plan.")
+        if self.type != "modification":
+            self.plan = None  # seule une modification produit une nouvelle version
+        return self
