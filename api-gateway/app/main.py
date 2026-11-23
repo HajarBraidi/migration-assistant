@@ -41,10 +41,15 @@ async def relayer(request: Request, url: str, entetes: dict | None = None) -> Re
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=503, detail=f"Service indisponible : {exc}") from exc
 
+    # Le nom du fichier à télécharger (archive du kit) doit suivre la réponse
+    transmis = {}
+    if "content-disposition" in reponse.headers:
+        transmis["Content-Disposition"] = reponse.headers["content-disposition"]
     return Response(
         content=reponse.content,
         status_code=reponse.status_code,
         media_type=reponse.headers.get("content-type"),
+        headers=transmis,
     )
 
 
@@ -158,3 +163,18 @@ async def analyser_projet(request: Request, _: str = Depends(utilisateur_connect
 async def estimer_couts(request: Request, _: str = Depends(utilisateur_connecte)) -> Response:
     """Compare le coût d'hébergement chez les fournisseurs cloud."""
     return await relayer(request, f"{settings.cost_service_url}/estimations")
+
+
+# ---------- Kit de déploiement ----------
+
+
+@app.post("/api/kits")
+async def apercu_kit(request: Request, _: str = Depends(utilisateur_connecte)) -> Response:
+    """Aperçu du kit, fichier par fichier."""
+    return await relayer(request, f"{settings.deploy_service_url}/kits")
+
+
+@app.post("/api/kits/archive")
+async def archive_kit(request: Request, _: str = Depends(utilisateur_connecte)) -> Response:
+    """Kit complet au format .zip."""
+    return await relayer(request, f"{settings.deploy_service_url}/kits/archive")

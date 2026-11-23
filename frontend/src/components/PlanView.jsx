@@ -14,12 +14,14 @@ import {
   Users,
   Wallet,
   Cloud,
+  Rocket,
 } from "lucide-react";
 import { STRATEGIES } from "../formConfig.js";
 import ArchitectureDiagram from "./ArchitectureDiagram.jsx";
 import AssistantChat from "./AssistantChat.jsx";
 import VersionsPanel from "./VersionsPanel.jsx";
 import CostComparison from "./CostComparison.jsx";
+import DeploymentKit from "./DeploymentKit.jsx";
 import { api } from "../api.js";
 import { useState } from "react";
 
@@ -328,6 +330,14 @@ export default function PlanView({ projet, onRetour, onMiseAJour }) {
                 cible={projet.description.hebergement_cible}
               />
             </Section>
+          )}
+
+          {projet.description && (
+            <div className="no-print">
+              <Section icone={Rocket} titre="Kit de déploiement">
+                <DeploymentKit description={projet.description} />
+              </Section>
+            </div>
           )}
         </div>
 

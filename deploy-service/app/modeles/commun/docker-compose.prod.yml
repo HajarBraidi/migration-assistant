@@ -1,0 +1,13 @@
+# Lancé sur chaque serveur par le pipeline de déploiement.
+services:
+  app:
+    image: ghcr.io/${GITHUB_REPOSITORY:?définir GITHUB_REPOSITORY}:${IMAGE_TAG:-latest}
+    env_file: .env
+    ports:
+      - "80:«port_app»"
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"

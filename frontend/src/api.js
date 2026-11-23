@@ -103,7 +103,41 @@ function formulaireFichier(fichier) {
   return donnees;
 }
 
+// Téléchargement d'un fichier renvoyé par le serveur (archive du kit)
+async function telecharger(chemin, donnees, nomParDefaut) {
+  const session = lireSession();
+  let reponse;
+  try {
+    reponse = await fetch(`/api${chemin}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(session ? { Authorization: `Bearer ${session.jeton}` } : {}),
+      },
+      body: JSON.stringify(donnees),
+    });
+  } catch {
+    throw new Error("Impossible de joindre le serveur. Vérifiez que l'application est démarrée.");
+  }
+  if (!reponse.ok) {
+    const data = await reponse.json().catch(() => null);
+    throw new Error(messageErreur(reponse.status, data));
+  }
+  const nom =
+    /filename="([^"]+)"/.exec(reponse.headers.get("content-disposition") || "")?.[1] || nomParDefaut;
+  const url = URL.createObjectURL(await reponse.blob());
+  const lien = document.createElement("a");
+  lien.href = url;
+  lien.download = nom;
+  document.body.appendChild(lien);
+  lien.click();
+  lien.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 export const api = {
+  apercuKit: (demande) => requete("/kits", { method: "POST", body: JSON.stringify(demande) }),
+  telechargerKit: (demande) => telecharger("/kits/archive", demande, "kit-deploiement.zip"),
   estimerCouts: (demande) =>
     requete("/estimations", { method: "POST", body: JSON.stringify(demande) }),
   analyserProjet: (fichier) =>

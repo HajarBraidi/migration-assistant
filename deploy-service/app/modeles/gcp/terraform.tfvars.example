@@ -1,0 +1,5 @@
+# Copier en terraform.tfvars (ignoré par Git) et compléter.
+# Le mot de passe de la base se donne par : export TF_VAR_mot_de_passe_base='...'
+projet_gcp         = "mon-projet-gcp"
+cle_ssh_publique   = "ssh-ed25519 AAAA... deploiement"
+ip_administrateurs = "196.12.34.56/32"
