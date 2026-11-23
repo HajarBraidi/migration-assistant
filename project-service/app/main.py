@@ -63,6 +63,7 @@ class ProjectResponse(BaseModel):
     id: int
     nom: str
     cree_le: datetime
+    description: ApplicationDescription
     plan: MigrationPlan
     avertissements: list[str]
     versions: list[VersionSummary]

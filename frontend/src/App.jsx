@@ -6,12 +6,13 @@ import PlanView from "./components/PlanView.jsx";
 import History from "./components/History.jsx";
 import AuthPage from "./components/AuthPage.jsx";
 import ScannerPage from "./components/ScannerPage.jsx";
+import CostPage from "./components/CostPage.jsx";
 import { api, effacerSession, lireSession, quandSessionExpiree } from "./api.js";
 import { VALEURS_INITIALES } from "./formConfig.js";
 
 export default function App() {
   const [session, setSession] = useState(lireSession);
-  // Vues possibles : "form", "loading", "plan", "history", "scanner"
+  // Vues possibles : "form", "loading", "plan", "history", "scanner", "couts"
   const [vue, setVue] = useState("form");
   const [projet, setProjet] = useState(null);
   const [erreur, setErreur] = useState(null);
@@ -99,6 +100,7 @@ export default function App() {
         {vue === "plan" && projet && <PlanView projet={projet} onRetour={() => naviguer("history")} onMiseAJour={setProjet} />}
         {vue === "history" && <History onOuvrir={ouvrir} onNouveau={() => naviguer("form")} />}
         {vue === "scanner" && <ScannerPage onCreerPlan={creerPlanDepuisAnalyse} />}
+        {vue === "couts" && <CostPage />}
       </main>
     </div>
   );

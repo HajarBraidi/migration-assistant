@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: [ai-service, project-service, api-gateway, auth-service, analysis-service]
+        service: [ai-service, project-service, api-gateway, auth-service, analysis-service, cost-service]
     defaults:
       run:
         working-directory: ${{ matrix.service }}

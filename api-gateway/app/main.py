@@ -149,3 +149,12 @@ async def restaurer_version(
 async def analyser_projet(request: Request, _: str = Depends(utilisateur_connecte)) -> Response:
     """Transmet l'archive .zip au service d'analyse (l'en-tête multipart est conservé)."""
     return await relayer(request, f"{settings.analysis_service_url}/analyses")
+
+
+# ---------- Estimation des coûts (route protégée) ----------
+
+
+@app.post("/api/estimations")
+async def estimer_couts(request: Request, _: str = Depends(utilisateur_connecte)) -> Response:
+    """Compare le coût d'hébergement chez les fournisseurs cloud."""
+    return await relayer(request, f"{settings.cost_service_url}/estimations")
