@@ -119,3 +119,17 @@ def test_transmet_l_estimation_des_couts(client):
     assert reponse.status_code == 200
     assert requetes[0].url.path == "/estimations"
     assert client.post("/api/estimations", json={}).status_code == 401
+
+
+def test_kit_archive_transmet_le_nom_du_fichier(client):
+    requetes = []
+    faux_service(lambda r: requetes.append(r) or httpx.Response(
+        200, content=b"PK", headers={"content-type": "application/zip",
+                                     "content-disposition": 'attachment; filename="rh-portal-kit.zip"'}))
+
+    reponse = client.post("/api/kits/archive", json={"nom": "RH"}, headers=jeton())
+
+    assert reponse.status_code == 200
+    assert requetes[0].url.path == "/kits/archive"
+    assert "rh-portal-kit.zip" in reponse.headers["content-disposition"]
+    assert client.post("/api/kits", json={}).status_code == 401

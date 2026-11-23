@@ -1,0 +1,82 @@
+# Construit l'image de l'application et la déploie sur les serveurs à chaque push sur main.
+# Secrets GitHub à créer (Settings > Secrets and variables > Actions) :
+#   SSH_PRIVATE_KEY : clé privée SSH de déploiement
+#   SERVEURS        : adresses IP des serveurs, séparées par des espaces
+name: Déploiement
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  UTILISATEUR_SSH: «utilisateur_ssh»
+
+jobs:
+  construire:
+    name: Construire l'image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Le registre ghcr.io n'accepte que des noms en minuscules
+      - name: Nom de l'image
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - name: Connexion au registre d'images GitHub
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Construire et publier l'image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ github.sha }}
+            ${{ env.IMAGE }}:latest
+
+  deployer:
+    name: Déployer sur les serveurs
+    needs: construire
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Préparer la clé SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploiement
+          chmod 600 ~/.ssh/deploiement
+
+      - name: Mettre à jour chaque serveur
+        env:
+          SERVEURS: ${{ secrets.SERVEURS }}
+          JETON: ${{ secrets.GITHUB_TOKEN }}
+          ACTEUR: ${{ github.actor }}
+          DEPOT: ${{ github.repository }}
+          TAG: ${{ github.sha }}
+        run: |
+          DEPOT="${DEPOT,,}"
+          for serveur in $SERVEURS; do
+            echo "Déploiement sur $serveur"
+            scp -i ~/.ssh/deploiement -o StrictHostKeyChecking=accept-new \
+              deploiement/docker-compose.prod.yml "$UTILISATEUR_SSH@$serveur:/opt/app/"
+            # Le jeton passe par l'entrée standard : il n'apparaît pas dans les processus du serveur
+            printf '%s' "$JETON" | ssh -i ~/.ssh/deploiement "$UTILISATEUR_SSH@$serveur" \
+              "cd /opt/app && docker login ghcr.io -u '$ACTEUR' --password-stdin \
+               && export GITHUB_REPOSITORY='$DEPOT' IMAGE_TAG='$TAG' \
+               && docker compose -f docker-compose.prod.yml pull \
+               && docker compose -f docker-compose.prod.yml up -d \
+               && docker image prune -f"
+          done
