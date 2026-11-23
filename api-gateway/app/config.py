@@ -6,6 +6,7 @@ class Settings(BaseSettings):
 
     project_service_url: str = "http://project-service:8000"
     auth_service_url: str = "http://auth-service:8000"
+    analysis_service_url: str = "http://analysis-service:8000"
     request_timeout_seconds: int = 200
     cors_origins: list[str] = ["http://localhost:5173"]
     jwt_secret: str

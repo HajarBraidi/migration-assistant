@@ -25,11 +25,25 @@ services:
     environment:
       - PROJECT_SERVICE_URL=http://project-service:8000
       - AUTH_SERVICE_URL=http://auth-service:8000
+      - ANALYSIS_SERVICE_URL=http://analysis-service:8000
       - JWT_SECRET=${JWT_SECRET}
       - WATCHFILES_FORCE_POLLING=true
     depends_on:
       - project-service
       - auth-service
+      - analysis-service
+
+  analysis-service:
+    build:
+      context: ./analysis-service
+      args:
+        INSTALL_DEV: "true"
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./analysis-service/app:/app/app
+      - ./analysis-service/tests:/app/tests
+    environment:
+      - WATCHFILES_FORCE_POLLING=true
 
   auth-service:
     build:

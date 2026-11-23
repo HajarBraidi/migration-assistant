@@ -5,22 +5,26 @@ import Loader from "./components/Loader.jsx";
 import PlanView from "./components/PlanView.jsx";
 import History from "./components/History.jsx";
 import AuthPage from "./components/AuthPage.jsx";
+import ScannerPage from "./components/ScannerPage.jsx";
 import { api, effacerSession, lireSession, quandSessionExpiree } from "./api.js";
 import { VALEURS_INITIALES } from "./formConfig.js";
 
 export default function App() {
   const [session, setSession] = useState(lireSession);
-  // Vues possibles : "form", "loading", "plan", "history"
+  // Vues possibles : "form", "loading", "plan", "history", "scanner"
   const [vue, setVue] = useState("form");
   const [projet, setProjet] = useState(null);
   const [erreur, setErreur] = useState(null);
   const [valeurs, setValeurs] = useState(VALEURS_INITIALES);
+  // Pré-remplissage par le scanner : { fichier, detectes, aVerifier }
+  const [preRempli, setPreRempli] = useState(null);
 
   const deconnecter = () => {
     effacerSession();
     setSession(null);
     setProjet(null);
     setValeurs(VALEURS_INITIALES);
+    setPreRempli(null);
     setVue("form");
   };
 
@@ -39,11 +43,24 @@ export default function App() {
     window.scrollTo(0, 0);
   };
 
+  // Le scanner pré-remplit le formulaire puis affiche la page « Nouvelle analyse »
+  const creerPlanDepuisAnalyse = (resultat, nomFichier) => {
+    const nom = nomFichier.replace(/\.zip$/i, "").replace(/[-_]+/g, " ").slice(0, 100);
+    setValeurs({ ...VALEURS_INITIALES, nom, ...resultat.description_preremplie });
+    setPreRempli({
+      fichier: nomFichier,
+      detectes: resultat.champs_detectes,
+      aVerifier: [...resultat.champs_a_verifier, "nom"],
+    });
+    naviguer("form");
+  };
+
   const generer = async (description) => {
     setErreur(null);
     setVue("loading");
     try {
       setProjet(await api.creerProjet(description));
+      setPreRempli(null);
       naviguer("plan");
     } catch (e) {
       setErreur(e.message);
@@ -70,11 +87,18 @@ export default function App() {
       />
       <main className="content">
         {vue === "form" && (
-          <MigrationForm valeurs={valeurs} setValeurs={setValeurs} onSoumettre={generer} erreurServeur={erreur} />
+          <MigrationForm
+            valeurs={valeurs}
+            setValeurs={setValeurs}
+            onSoumettre={generer}
+            erreurServeur={erreur}
+            preRempli={preRempli}
+          />
         )}
         {vue === "loading" && <Loader />}
         {vue === "plan" && projet && <PlanView projet={projet} onRetour={() => naviguer("history")} onMiseAJour={setProjet} />}
         {vue === "history" && <History onOuvrir={ouvrir} onNouveau={() => naviguer("form")} />}
+        {vue === "scanner" && <ScannerPage onCreerPlan={creerPlanDepuisAnalyse} />}
       </main>
     </div>
   );

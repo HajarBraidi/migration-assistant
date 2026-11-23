@@ -140,3 +140,12 @@ async def restaurer_version(
         f"{settings.project_service_url}/projects/{project_id}/versions/{numero}/restaurer",
         {"X-User-Id": user_id},
     )
+
+
+# ---------- Analyse de code (route protégée) ----------
+
+
+@app.post("/api/analyses")
+async def analyser_projet(request: Request, _: str = Depends(utilisateur_connecte)) -> Response:
+    """Transmet l'archive .zip au service d'analyse (l'en-tête multipart est conservé)."""
+    return await relayer(request, f"{settings.analysis_service_url}/analyses")

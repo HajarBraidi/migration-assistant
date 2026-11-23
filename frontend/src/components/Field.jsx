@@ -1,7 +1,13 @@
-import { Check } from "lucide-react";
+import { Check, ScanSearch } from "lucide-react";
+
+// Origine d'une valeur pré-remplie par le scanner de code
+const ORIGINES = {
+  detecte: { classe: "origine-detecte", texte: "Détecté" },
+  verifier: { classe: "origine-verifier", texte: "À vérifier" },
+};
 
 // Affiche un champ du formulaire selon son type
-export default function Field({ champ, valeur, erreur, onChange }) {
+export default function Field({ champ, valeur, erreur, onChange, origine, aCompleter }) {
   const { name, label, type, required, options, placeholder, full } = champ;
   const id = `champ-${name}`;
 
@@ -50,9 +56,14 @@ export default function Field({ champ, valeur, erreur, onChange }) {
   }
 
   return (
-    <div className={`field ${full ? "full" : ""} ${erreur ? "has-error" : ""}`}>
+    <div className={`field ${full ? "full" : ""} ${erreur ? "has-error" : ""} ${aCompleter ? "a-completer" : ""}`}>
       <label htmlFor={id} id={type === "multi" ? id : undefined}>
         {label} {required && <span className="required">*</span>}
+        {origine && (
+          <span className={`origine ${ORIGINES[origine].classe}`}>
+            <ScanSearch size={12} />{ORIGINES[origine].texte}
+          </span>
+        )}
       </label>
       {controle}
       {erreur && <span className="field-error">{erreur}</span>}
