@@ -1,4 +1,4 @@
-import { FilePlus2, FolderKanban, LogOut, ScanSearch } from "lucide-react";
+import { Calculator, FilePlus2, FolderKanban, LogOut, ScanSearch } from "lucide-react";
 import Logo from "./Logo.jsx";
 
 // Le menu est organisé par groupes : ajouter une entrée = ajouter une ligne ici
@@ -12,7 +12,10 @@ const GROUPES = [
   },
   {
     titre: "Outils",
-    liens: [{ id: "scanner", libelle: "Scanner de code", icone: ScanSearch }],
+    liens: [
+      { id: "scanner", libelle: "Scanner de code", icone: ScanSearch },
+      { id: "couts", libelle: "Comparateur de coûts", icone: Calculator },
+    ],
   },
 ];
 

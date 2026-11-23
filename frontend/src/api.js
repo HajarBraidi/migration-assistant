@@ -104,6 +104,8 @@ function formulaireFichier(fichier) {
 }
 
 export const api = {
+  estimerCouts: (demande) =>
+    requete("/estimations", { method: "POST", body: JSON.stringify(demande) }),
   analyserProjet: (fichier) =>
     requete("/analyses", { method: "POST", body: formulaireFichier(fichier) }),
   inscrire: (donnees) => authentifier("/auth/register", donnees),

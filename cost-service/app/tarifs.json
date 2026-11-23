@@ -1,0 +1,137 @@
+{
+  "_a_lire": "Tarifs publics à la demande (sans engagement), hors taxes, régions européennes. Ordres de grandeur relevés en novembre 2026 sur les pages publiques des fournisseurs et sur des comparateurs (Holori, DoiT, Bytebase). À mettre à jour régulièrement : les prix changent.",
+  "releve_le": "novembre 2026",
+  "taux_de_change": {
+    "usd_vers_eur": 0.86,
+    "eur_vers_mad": 10.8
+  },
+  "heures_par_mois": 730,
+  "fournisseurs": {
+    "AWS": {
+      "nom": "Amazon Web Services",
+      "region": "Europe (Paris)",
+      "devise": "USD",
+      "calculateur": "https://calculator.aws/",
+      "serveur_par_heure": {
+        "small": 0.0236,
+        "medium": 0.0472,
+        "large": 0.0944,
+        "xlarge": 0.1888
+      },
+      "serveur_reference": {
+        "small": "t3.small",
+        "medium": "t3.medium",
+        "large": "t3.large",
+        "xlarge": "t3.xlarge"
+      },
+      "base_par_heure": {
+        "small": 0.04,
+        "medium": 0.08,
+        "large": 0.16,
+        "xlarge": 0.32
+      },
+      "base_reference": "Amazon RDS (db.t3)",
+      "stockage_par_go_mois": 0.0928,
+      "sauvegarde_par_go_mois": 0.05,
+      "trafic_sortant_par_go": 0.09,
+      "trafic_gratuit_go": 100,
+      "repartiteur_par_mois": 25
+    },
+    "Azure": {
+      "nom": "Microsoft Azure",
+      "region": "France Centre",
+      "devise": "USD",
+      "calculateur": "https://azure.microsoft.com/pricing/calculator/",
+      "serveur_par_heure": {
+        "small": 0.024,
+        "medium": 0.048,
+        "large": 0.096,
+        "xlarge": 0.192
+      },
+      "serveur_reference": {
+        "small": "B1ms",
+        "medium": "B2s",
+        "large": "B2ms",
+        "xlarge": "B4ms"
+      },
+      "base_par_heure": {
+        "small": 0.038,
+        "medium": 0.075,
+        "large": 0.2,
+        "xlarge": 0.4
+      },
+      "base_reference": "Azure Database for PostgreSQL / MySQL (Flexible Server)",
+      "stockage_par_go_mois": 0.115,
+      "sauvegarde_par_go_mois": 0.05,
+      "trafic_sortant_par_go": 0.087,
+      "trafic_gratuit_go": 100,
+      "repartiteur_par_mois": 20
+    },
+    "GCP": {
+      "nom": "Google Cloud",
+      "region": "Europe (Belgique)",
+      "devise": "USD",
+      "calculateur": "https://cloud.google.com/products/calculator",
+      "serveur_par_heure": {
+        "small": 0.031,
+        "medium": 0.061,
+        "large": 0.078,
+        "xlarge": 0.155
+      },
+      "serveur_reference": {
+        "small": "e2-small",
+        "medium": "e2-medium",
+        "large": "e2-standard-2",
+        "xlarge": "e2-standard-4"
+      },
+      "base_par_heure": {
+        "small": 0.045,
+        "medium": 0.09,
+        "large": 0.17,
+        "xlarge": 0.33
+      },
+      "base_reference": "Cloud SQL",
+      "stockage_par_go_mois": 0.11,
+      "sauvegarde_par_go_mois": 0.03,
+      "trafic_sortant_par_go": 0.12,
+      "trafic_gratuit_go": 0,
+      "repartiteur_par_mois": 20
+    },
+    "OVHcloud": {
+      "nom": "OVHcloud",
+      "region": "France",
+      "devise": "EUR",
+      "calculateur": "https://www.ovhcloud.com/fr/vps/compare/",
+      "serveur_par_mois": {
+        "small": 3.81,
+        "medium": 3.81,
+        "large": 7.21,
+        "xlarge": 19.96
+      },
+      "serveur_reference": {
+        "small": "VPS-1",
+        "medium": "VPS-1",
+        "large": "VPS-2",
+        "xlarge": "VPS-4"
+      },
+      "disque_inclus_go": {
+        "small": 40,
+        "medium": 40,
+        "large": 75,
+        "xlarge": 200
+      },
+      "base_reference": "Base installée sur un VPS dédié (sauvegarde quotidienne incluse)",
+      "stockage_par_go_mois": 0.05,
+      "sauvegarde_par_go_mois": 0.0,
+      "trafic_sortant_par_go": 0.0,
+      "trafic_gratuit_go": 0,
+      "repartiteur_par_mois": 20,
+      "serveur_caracteristiques": {
+        "small": "2 vCores, 4 Go, 40 Go NVMe",
+        "medium": "2 vCores, 4 Go, 40 Go NVMe",
+        "large": "4 vCores, 8 Go, 75 Go NVMe",
+        "xlarge": "8 vCores, 24 Go, 200 Go NVMe"
+      }
+    }
+  }
+}

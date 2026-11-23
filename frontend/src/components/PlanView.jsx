@@ -13,11 +13,13 @@ import {
   Target,
   Users,
   Wallet,
+  Cloud,
 } from "lucide-react";
 import { STRATEGIES } from "../formConfig.js";
 import ArchitectureDiagram from "./ArchitectureDiagram.jsx";
 import AssistantChat from "./AssistantChat.jsx";
 import VersionsPanel from "./VersionsPanel.jsx";
+import CostComparison from "./CostComparison.jsx";
 import { api } from "../api.js";
 import { useState } from "react";
 
@@ -313,6 +315,20 @@ export default function PlanView({ projet, onRetour, onMiseAJour }) {
               ))}
             </ul>
           </Section>
+
+          {projet.description && (
+            <Section icone={Cloud} titre="Coût d'hébergement cloud estimé">
+              <CostComparison
+                demande={{
+                  nombre_utilisateurs: projet.description.nombre_utilisateurs,
+                  volume_donnees: projet.description.volume_donnees,
+                  type_base_donnees: projet.description.type_base_donnees,
+                  haute_disponibilite: projet.description.interruption_acceptable === "Aucune",
+                }}
+                cible={projet.description.hebergement_cible}
+              />
+            </Section>
+          )}
         </div>
 
         <aside className="plan-chat no-print">

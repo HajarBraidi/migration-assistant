@@ -8,6 +8,7 @@ def test_creer_puis_lire_un_projet(client, description):
     projet = reponse.json()
     assert projet["nom"] == "StockPro"
     assert projet["plan"]["strategie"]["strategie"] == "Replatform"
+    assert projet["description"]["budget"] == "Faible"  # utile au calcul des coûts
 
     lecture = client.get(f"/projects/{projet['id']}", headers=UTILISATEUR_1)
     assert lecture.status_code == 200

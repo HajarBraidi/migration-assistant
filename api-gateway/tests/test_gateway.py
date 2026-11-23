@@ -108,3 +108,14 @@ def test_transmet_l_archive_au_service_d_analyse(client):
 
 def test_analyse_sans_jeton_renvoie_401(client):
     assert client.post("/api/analyses", files={"archive": ("p.zip", b"x")}).status_code == 401
+
+
+def test_transmet_l_estimation_des_couts(client):
+    requetes = []
+    faux_service(lambda r: requetes.append(r) or httpx.Response(200, json={"moins_chere": "OVHcloud"}))
+
+    reponse = client.post("/api/estimations", json={"nombre_utilisateurs": "< 100"}, headers=jeton())
+
+    assert reponse.status_code == 200
+    assert requetes[0].url.path == "/estimations"
+    assert client.post("/api/estimations", json={}).status_code == 401
