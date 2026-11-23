@@ -1,9 +1,19 @@
-import { FilePlus2, History, LogOut } from "lucide-react";
+import { FilePlus2, FolderKanban, LogOut, ScanSearch } from "lucide-react";
 import Logo from "./Logo.jsx";
 
-const LIENS = [
-  { id: "form", libelle: "Nouvelle analyse", icone: FilePlus2 },
-  { id: "history", libelle: "Historique", icone: History },
+// Le menu est organisé par groupes : ajouter une entrée = ajouter une ligne ici
+const GROUPES = [
+  {
+    titre: "Principal",
+    liens: [
+      { id: "form", libelle: "Nouvelle analyse", icone: FilePlus2 },
+      { id: "history", libelle: "Mes projets", icone: FolderKanban },
+    ],
+  },
+  {
+    titre: "Outils",
+    liens: [{ id: "scanner", libelle: "Scanner de code", icone: ScanSearch }],
+  },
 ];
 
 const initiales = (nom) =>
@@ -21,16 +31,21 @@ export default function Sidebar({ vue, onNaviguer, utilisateur, onDeconnecter })
       </div>
 
       <nav className="nav">
-        {LIENS.map(({ id, libelle, icone: Icone }) => (
-          <button
-            key={id}
-            className={`nav-link ${vue === id ? "active" : ""}`}
-            onClick={() => onNaviguer(id)}
-            aria-label={libelle}
-          >
-            <Icone size={18} />
-            <span className="nav-label">{libelle}</span>
-          </button>
+        {GROUPES.map((groupe) => (
+          <div key={groupe.titre} className="nav-group">
+            <div className="nav-group-title">{groupe.titre}</div>
+            {groupe.liens.map(({ id, libelle, icone: Icone }) => (
+              <button
+                key={id}
+                className={`nav-link ${vue === id ? "active" : ""}`}
+                onClick={() => onNaviguer(id)}
+                aria-label={libelle}
+              >
+                <Icone size={18} />
+                <span className="nav-label">{libelle}</span>
+              </button>
+            ))}
+          </div>
         ))}
       </nav>
 

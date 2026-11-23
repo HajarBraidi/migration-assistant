@@ -90,3 +90,21 @@ def test_transmet_les_routes_de_dialogue_avec_l_identifiant(client):
 
 def test_dialogue_sans_jeton_renvoie_401(client):
     assert client.post("/api/projects/3/messages", json={"message": "x"}).status_code == 401
+
+
+def test_transmet_l_archive_au_service_d_analyse(client):
+    requetes = []
+    faux_service(lambda r: requetes.append(r) or httpx.Response(200, json={"score_preparation": 40}))
+
+    reponse = client.post(
+        "/api/analyses", files={"archive": ("p.zip", b"PK...", "application/zip")}, headers=jeton()
+    )
+
+    assert reponse.status_code == 200
+    assert requetes[0].url.path == "/analyses"
+    assert requetes[0].headers["Content-Type"].startswith("multipart/form-data; boundary=")
+    assert b"p.zip" in requetes[0].content
+
+
+def test_analyse_sans_jeton_renvoie_401(client):
+    assert client.post("/api/analyses", files={"archive": ("p.zip", b"x")}).status_code == 401

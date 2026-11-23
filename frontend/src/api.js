@@ -57,6 +57,7 @@ function messageErreur(status, data) {
     return "Le service est momentanément indisponible. Réessayez dans quelques instants.";
   }
   if (status === 404) return "Ce projet est introuvable.";
+  if (status === 413) return data?.detail || "Le fichier est trop volumineux.";
   return data?.detail || "Une erreur inattendue est survenue.";
 }
 
@@ -64,10 +65,12 @@ async function requete(chemin, options = {}) {
   const session = lireSession();
   let reponse;
   try {
+    // Pour un envoi de fichier (FormData), le navigateur choisit lui-même le Content-Type
+    const estFichier = options.body instanceof FormData;
     reponse = await fetch(`/api${chemin}`, {
       ...options,
       headers: {
-        "Content-Type": "application/json",
+        ...(estFichier ? {} : { "Content-Type": "application/json" }),
         ...(session ? { Authorization: `Bearer ${session.jeton}` } : {}),
       },
     });
@@ -94,7 +97,15 @@ async function authentifier(chemin, donnees) {
   return session;
 }
 
+function formulaireFichier(fichier) {
+  const donnees = new FormData();
+  donnees.append("archive", fichier);
+  return donnees;
+}
+
 export const api = {
+  analyserProjet: (fichier) =>
+    requete("/analyses", { method: "POST", body: formulaireFichier(fichier) }),
   inscrire: (donnees) => authentifier("/auth/register", donnees),
   connecter: (donnees) => authentifier("/auth/login", donnees),
   moi: () => requete("/auth/me"),
